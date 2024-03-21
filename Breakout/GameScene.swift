@@ -108,6 +108,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        func didBegin(_ contact: SKPhysicsContact) {
+            if contact.bodyA.node?.name == "brick" ||
+                contact.bodyB.node?.name == "brick" {
+                print("You win!")
+                brick.removeFromParent()
+                ball.removeFromParent()
+            }
+            if contact.bodyA.node?.name == "loseZone" ||
+                contact.bodyB.node?.name == "loseZone" {
+                print("You Lose!")
+                ball.removeFromParent()
+            }
+        }
         for touch in touches {
             let location = touch.location(in: self)
             paddle.position.x = location.x
