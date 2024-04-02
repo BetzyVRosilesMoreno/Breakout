@@ -165,6 +165,32 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if playingGame {
                 paddle.position.x = location.x
             }
+            
+            func didBegin(_ contact: SKPhysicsContact) {
+                if contact.bodyA.node?.name == "brick" ||
+                    contact.bodyB.node?.name == "brick" {
+                    print("You Win")
+                    gameOver(winner: true)
+                }
+                if contact.bodyA.node?.name == "LoseZone" ||
+                    contact.bodyB.node?.name == "LoseZone" {
+                    print("You Lose")
+                    gameOver(winner: false)
+                }
+            }
+            
+            func gameOver (winner: Bool) {
+                playingGame = false
+                playLable.alpha = 1
+                resetGame ()
+                if winner {
+                    playLable.text = "You win! Tap to play again"
+                }
+                else {
+                    playLable.text = "You lose! Tap to play again"
+                }
+                
+            }
         }
     }
 }
