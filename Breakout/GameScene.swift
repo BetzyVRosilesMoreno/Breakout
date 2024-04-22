@@ -11,7 +11,7 @@ import GameplayKit
 class GameScene: SKScene, SKPhysicsContactDelegate {
     var ball = SKShapeNode()
     var paddle = SKSpriteNode()
-    var brick = SKSpriteNode()
+    var bricks = [SKSpriteNode]()
     var loseZone = SKSpriteNode()
     var playLable = SKLabelNode()
     var livesLable = SKLabelNode()
@@ -19,6 +19,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var playingGame = false
     var score = 0
     var lives = 3
+    var removeBricks = 0
     
     override func didMove(to view: SKView) {
         // this stuff happens once (when the app opens)
@@ -32,7 +33,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         //This stuff happens before each game stars
         makeBall()
         makePaddle()
-        makeBrick()
+        makeBricks()
         makeLoseZone()
         kickBall()
         makeLabels()
@@ -101,14 +102,34 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(paddle)
     }
     
-    func makeBrick() {
-        brick.removeFromParent () //remove the brick, if it exists
-        brick = SKSpriteNode (color: .blue, size: CGSize(width: 50, height: 20))
-        brick.position = CGPoint (x: frame.midX, y: frame.maxY - 50)
-        brick.name = "brick"
-        brick.physicsBody = SKPhysicsBody (rectangleOf: brick.size)
+    func makeBricks() {
+        // first, remove any leftover bricks (from prior game)
+        for brick in bricks {
+            if brick.parent != nil {
+                brick.removeFromParent()
+            }
+        }
+        bricks.removeAll() // clear the array
+        removeBricks = 0 // reset the counter
+        
+        // now, figure the number and spacing for each row of bricks
+        let count = Int(frame.width) / 55  // bricks per row
+        let xOffset = (Int(frame.width) - (count * 55)) / 2 + Int(frame.minX) + 25
+        let y = Int(frame.maxY) - 65
+        for i in 0..<count {
+            let x = i * 55 + xOffset
+            makeBrick(x: x, y: y, color: .green)
+        }
+    }
+    
+    // helper function used  to make each brick
+    func makeBrick(x: Int, y: Int, color: UIColor) {
+        let brick = SKSpriteNode(color: color, size: CGSize(width: 50, height: 20))
+        brick.position = CGPoint(x: x, y: y)
+        brick.physicsBody = SKPhysicsBody(rectangleOf: brick.size)
         brick.physicsBody?.isDynamic = false
         addChild(brick)
+        bricks.append(brick)
     }
     
     func makeLoseZone() {
@@ -159,38 +180,54 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
     }
+    
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             let location = touch.location(in: self)
             if playingGame {
                 paddle.position.x = location.x
             }
-            
-            func didBegin(_ contact: SKPhysicsContact) {
-                if contact.bodyA.node?.name == "brick" ||
-                    contact.bodyB.node?.name == "brick" {
-                    print("You Win")
+        }
+    }
+    
+    func didBegin(_ contact: SKPhysicsContact) {
+        //ask each brick, "Is it you?"
+        for brick in bricks {
+            if contact.bodyA.node?.name == "brick" ||
+                contact.bodyB.node?.name == "brick" {
+                score += 1
+                updateLabels()
+                brick.removeFromParent()
+                removeBricks += 1
+                if removeBricks == bricks.count {
                     gameOver(winner: true)
                 }
-                if contact.bodyA.node?.name == "LoseZone" ||
-                    contact.bodyB.node?.name == "LoseZone" {
-                    print("You Lose")
-                    gameOver(winner: false)
-                }
+        }
+        }
+        if contact.bodyA.node?.name == "LoseZone" ||
+            contact.bodyB.node?.name == "LoseZone" {
+            lives -= 1
+            if lives > 0 {
+                score = 0
+                resetGame()
+                kickBall()
             }
-            
-            func gameOver (winner: Bool) {
-                playingGame = false
-                playLable.alpha = 1
-                resetGame ()
-                if winner {
-                    playLable.text = "You win! Tap to play again"
-                }
-                else {
-                    playLable.text = "You lose! Tap to play again"
-                }
-                
+            else {
+                gameOver(winner: false)
             }
         }
+    }
+    
+    func gameOver (winner: Bool) {
+        playingGame = false
+        playLable.alpha = 1
+        resetGame ()
+        if winner {
+            playLable.text = "You win! Tap to play again"
+        }
+        else {
+            playLable.text = "You lose! Tap to play again"
+        }
+        
     }
 }
