@@ -207,13 +207,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     brick.color = .green // orange bricks turn green
                 }
                 else{ // must be a green brick, which get remove
-                brick.removeFromParent()
-                removeBricks += 1
+                    brick.removeFromParent()
+                    removeBricks += 1
                     if removeBricks == bricks.count {
                         gameOver(winner: true)
                     }
                 }
-        }
+            }
         }
         if contact.bodyA.node?.name == "LoseZone" ||
             contact.bodyB.node?.name == "LoseZone" {
@@ -240,5 +240,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             playLable.text = "You lose! Tap to play again"
         }
         
+    }
+    
+    override func update(_ currentTime: TimeInterval) {
+        if abs(ball.physicsBody!.velocity.dx) < 100 {
+            // ball has stalled in x direction, so kick it randomly horizontally
+            ball.physicsBody?.applyImpulse(CGVector(dx: Int.random(in: -3...3), dy: 0))
+        }
+        if abs(ball.physicsBody!.velocity.dy) < 100 {
+            // ball has stalled in y direct, so kick it randomly verticallt
+            ball.physicsBody?.applyImpulse(CGVector(dx: 0, dy: Int.random(in: -3...3)))
+        }
     }
 }
