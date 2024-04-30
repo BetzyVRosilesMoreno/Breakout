@@ -26,6 +26,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         physicsWorld.contactDelegate = self
         self.physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
         createBackground()
+        makeLoseZone()
+        makeLabels()
         resetGame()
     }
     
@@ -34,9 +36,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         makeBall()
         makePaddle()
         makeBricks()
-        makeLoseZone()
-        kickBall()
-        makeLabels()
         updateLabels()
     }
     
@@ -101,6 +100,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         paddle.physicsBody?.isDynamic = false
         addChild(paddle)
     }
+    // helper function used  to make each brick
+    func makeBrick(x: Int, y: Int, color: UIColor) {
+        let brick = SKSpriteNode(color: color, size: CGSize(width: 50, height: 20))
+        brick.position = CGPoint(x: x, y: y)
+        brick.physicsBody = SKPhysicsBody(rectangleOf: brick.size)
+        brick.physicsBody?.isDynamic = false
+        addChild(brick)
+        bricks.append(brick)
+    }
     
     func makeBricks() {
         // first, remove any leftover bricks (from prior game)
@@ -123,16 +131,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 makeBrick(x: x, y: y, color: colors[r])
             }
         }
-    }
-    
-    // helper function used  to make each brick
-    func makeBrick(x: Int, y: Int, color: UIColor) {
-        let brick = SKSpriteNode(color: color, size: CGSize(width: 50, height: 20))
-        brick.position = CGPoint(x: x, y: y)
-        brick.physicsBody = SKPhysicsBody(rectangleOf: brick.size)
-        brick.physicsBody?.isDynamic = false
-        addChild(brick)
-        bricks.append(brick)
     }
     
     func makeLoseZone() {
@@ -161,6 +159,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLable.fontColor = .black
         scoreLable.fontName = "Arial"
         scoreLable.position = CGPoint(x: frame.maxX - 50, y: frame.minY + 18)
+        addChild(scoreLable)
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -196,8 +195,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
         //ask each brick, "Is it you?"
         for brick in bricks {
-            if contact.bodyA.node?.name == "brick" ||
-                contact.bodyB.node?.name == "brick" {
+            if contact.bodyA.node == brick ||
+                contact.bodyB.node == brick {
                 score += 1
                 // increase ball velocity by 2%
                 ball.physicsBody!.velocity.dx *= CGFloat(1.02)
@@ -218,8 +217,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 }
             }
         }
-        if contact.bodyA.node?.name == "LoseZone" ||
-            contact.bodyB.node?.name == "LoseZone" {
+        if contact.bodyA.node?.name == "loseZone" ||
+            contact.bodyB.node?.name == "loseZone" {
             lives -= 1
             if lives > 0 {
                 score = 0
